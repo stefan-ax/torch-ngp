@@ -1,0 +1,49 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Train Venus-1",
+            "type": "python",
+            "request": "launch",
+            "program": "main_nerf.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["data/venus-rough-1",
+                     "--workspace",
+                     "trial_nerf_venus",
+                     "-O",
+                     "--gui",
+                     "--scale",
+                     "2.0",
+                     "--bound",
+                     "1.0",
+                     "--dt_gamma",
+                     "0.02"]
+        },
+        {
+            "name": "Python: COLMAP",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/colmap2nerf.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--images",
+                "data/venus-rough-1/images",
+                "--run_colmap",
+                "--estimate_affine_shape"
+            ]
+        }
+    ]
+}
