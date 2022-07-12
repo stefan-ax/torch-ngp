@@ -88,7 +88,7 @@ def run_colmap(args):
         sys.exit(1)
     if os.path.exists(db):
         os.remove(db)
-    do_system(f"colmap feature_extractor --ImageReader.camera_model OPENCV --SiftExtraction.estimate_affine_shape {flag_EAS} --SiftExtraction.domain_size_pooling {flag_EAS} --ImageReader.single_camera 1 --database_path {db} --image_path {images}")
+    do_system(f"colmap feature_extractor --ImageReader.camera_model SIMPLE_PINHOLE --SiftExtraction.estimate_affine_shape {flag_EAS} --SiftExtraction.domain_size_pooling {flag_EAS} --ImageReader.single_camera 1 --database_path {db} --image_path {images}")
     do_system(f"colmap {args.colmap_matcher}_matcher --SiftMatching.guided_matching {flag_EAS} --database_path {db}")
     try:
         shutil.rmtree(sparse)
@@ -101,8 +101,8 @@ def run_colmap(args):
         shutil.rmtree(text)
     except:
         pass
-    do_system(f"mkdir {text}")
-    do_system(f"colmap model_converter --input_path {sparse}/0 --output_path {text} --output_type TXT")
+    do_system(f"mkdir {text}".replace("\\", "/"))
+    do_system(f"colmap model_converter --input_path {sparse}/0 --output_path {text} --output_type TXT".replace("\\", "/"))
 
 def variance_of_laplacian(image):
     return cv2.Laplacian(image, cv2.CV_64F).var()
@@ -169,8 +169,8 @@ if __name__ == "__main__":
     args.colmap_db = os.path.join(root_dir, args.colmap_db)
     args.colmap_text = os.path.join(root_dir, args.colmap_text)
 
-    if args.run_colmap:
-        run_colmap(args)
+    # if args.run_colmap:
+    #     run_colmap(args)
 
     SKIP_EARLY = int(args.skip_early)
     TEXT_FOLDER = args.colmap_text
