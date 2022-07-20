@@ -22,13 +22,13 @@ def remove_bg(filepath):
     img.save(filepath)
 
 
-basedir = "data/venus-rough-1"
+basedir = "data/venus-rough-1-2-w-background"
 video_name = 'venus_rough_video_1.mp4'
 
 video = cv2.VideoCapture(os.path.join(basedir, video_name))
 
-os.makedirs(os.path.join(basedir, 'source'), exist_ok=True)
-os.makedirs(os.path.join(basedir, 'source_jpg'), exist_ok=True)
+os.makedirs(os.path.join(basedir, 'images'), exist_ok=True)
+os.makedirs(os.path.join(basedir, 'images_jpg'), exist_ok=True)
 
 print("Step 1: Extracting frames")
 i = 0
@@ -44,16 +44,16 @@ while video.isOpened():
     # frame = remove_bg(frame)
 
     # _ = cv2.imwrite(os.path.join(basedir, 'source/', video_name[:-4]) + f'_{i}.png', frame, )
-    _ = cv2.imwrite(os.path.join(basedir, 'source/' + f'r_{i}.png'), frame, )
+    _ = cv2.imwrite(os.path.join(basedir, 'images/' + f'r_{i}.png'), frame, )
     # _ = cv2.imwrite(os.path.join(basedir, 'source_jpg/', video_name[:-4]) + f'_{i}.jpg', frame, )
-    _ = cv2.imwrite(os.path.join(basedir, 'source_jpg/' + f'r_{i}.jpg'), frame, )
+    _ = cv2.imwrite(os.path.join(basedir, 'images_jpg/' + f'r_{i}.jpg'), frame, )
 
     i += 1
 
 print("Step 2: Removing background")
 for j in tqdm.tqdm(range(i)):
     # remove_bg(os.path.join(basedir, 'source/', video_name[:-4]) + f'_{j}.png')
-    remove_bg(os.path.join(basedir, 'source/' + f'r_{j}.png'))
-    remove_bg(os.path.join(basedir, 'source_jpg/' + f'r_{j}.jpg'))
+    remove_bg(os.path.join(basedir, 'images/' + f'r_{j}.png'))
+    remove_bg(os.path.join(basedir, 'images_jpg/' + f'r_{j}.jpg'))
 
 print("DONE")

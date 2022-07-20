@@ -168,8 +168,8 @@ if __name__ == "__main__":
     args.colmap_db = os.path.join(root_dir, args.colmap_db)
     args.colmap_text = os.path.join(root_dir, args.colmap_text)
 
-    # if args.run_colmap:
-    #     run_colmap(args)
+    if args.run_colmap:
+        run_colmap(args)
 
     SKIP_EARLY = int(args.skip_early)
     TEXT_FOLDER = args.colmap_text
