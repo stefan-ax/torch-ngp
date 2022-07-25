@@ -1,13 +1,10 @@
-from copy import deepcopy
-from email.mime import base
-import cv2
 import os
-
-from rembg.bg import remove
-from PIL import Image
 import tqdm
 
-from PIL import ImageFile
+import cv2
+from rembg.bg import remove
+from PIL import Image, ImageFile
+from utils import filter_all
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -22,7 +19,7 @@ def remove_bg(filepath):
     img.save(filepath)
 
 
-basedir = "data/venus-rough-1-2-w-background"
+basedir = "data/venus-rough-1-texture-tests-1"
 video_name = 'venus_rough_video_1.mp4'
 
 video = cv2.VideoCapture(os.path.join(basedir, video_name))
@@ -34,26 +31,20 @@ print("Step 1: Extracting frames")
 i = 0
 while video.isOpened():
     ret, frame = video.read()
-    if ret == False:
+    if not ret:
         break
 
-    # Resize frame
-    # frame = cv2.resize(frame, (800, 800))
-
-    # Remove background
-    # frame = remove_bg(frame)
-
-    # _ = cv2.imwrite(os.path.join(basedir, 'source/', video_name[:-4]) + f'_{i}.png', frame, )
     _ = cv2.imwrite(os.path.join(basedir, 'images/' + f'r_{i}.png'), frame, )
-    # _ = cv2.imwrite(os.path.join(basedir, 'source_jpg/', video_name[:-4]) + f'_{i}.jpg', frame, )
     _ = cv2.imwrite(os.path.join(basedir, 'images_jpg/' + f'r_{i}.jpg'), frame, )
 
     i += 1
 
-print("Step 2: Removing background")
+print("Step 2: Texturizing background")
+filter_all(os.path.join(basedir, 'images'))
+
+print("Step 3: Removing background")
 for j in tqdm.tqdm(range(i)):
-    # remove_bg(os.path.join(basedir, 'source/', video_name[:-4]) + f'_{j}.png')
-    remove_bg(os.path.join(basedir, 'images/' + f'r_{j}.png'))
-    remove_bg(os.path.join(basedir, 'images_jpg/' + f'r_{j}.jpg'))
+    remove_bg(os.path.join(basedir, 'images_filtered/' + f'r_{j}.png'))
+    # remove_bg(os.path.join(basedir, 'images_jpg/' + f'r_{j}.jpg'))
 
 print("DONE")
