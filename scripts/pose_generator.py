@@ -1,9 +1,11 @@
-from math import degrees, radians
+import os
 import numpy as np
 from tqdm.auto import tqdm
 from pyquaternion import Quaternion
 from scipy.spatial.transform import Rotation
 import re
+
+basepath = "data/venus-rough-1-positions-tests/colmap_text"
 
 def rot3to4(rotation: np.ndarray):
     assert rotation.shape == (3, 3)
@@ -21,7 +23,7 @@ if __name__ == '__main__':
     
     new_lines = []
     
-    with open("data/venus-rough-1-positions-tests/colmap_text/images_old.txt", "r") as fin:
+    with open(os.path.join(basepath, "images_old.txt"), "r") as fin:
         for line in fin.readlines()[0::2]:
             if line[0] != "#":
                 IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME = line.split()
@@ -106,5 +108,5 @@ if __name__ == '__main__':
         to_write_lines.append(" ".join([IMAGE_ID, str(NEW_QW), str(NEW_QX), str(NEW_QY), str(NEW_QZ), str(NEW_TX), str(NEW_TY), str(NEW_TZ), CAMERA_ID, NAME]) + "\n")
         # to_write_lines.append("\n")
         
-    with open("data/venus-rough-1-positions-tests/colmap_text/images.txt", "w") as fout:
+    with open(os.path.join(basepath, "images.txt", "w")) as fout:
         for line in to_write_lines: fout.write(line + "\n")
