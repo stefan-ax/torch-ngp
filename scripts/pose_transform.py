@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pose transform (circle approximator)')
     parser.add_argument('path', type=str, help='Path to images.txt')
     parser.add_argument('--constant_axis', type=str, help="Axis to keep constant. Default: y", default='y')
-    # Remember axes colors: x-red, y-green, z-blue     
+    # Remember axes colors: x-red, y-green, z-blue
 
     args = parser.parse_args()
 
