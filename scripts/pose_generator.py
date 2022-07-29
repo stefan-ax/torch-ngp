@@ -5,8 +5,7 @@ from pyquaternion import Quaternion
 from scipy.spatial.transform import Rotation
 import re
 import argparse
-
-basepath = "data/venus-rough-1-positions-tests/colmap_text"
+import sqlite3
 
 
 def rot3to4(rotation: np.ndarray):
@@ -16,9 +15,23 @@ def rot3to4(rotation: np.ndarray):
     return result
 
 
-if __name__ == '__main__':
+def write_cameras(path):
+    fullpath = os.path.join(path, "cameras.txt")
+
+    to_write_lines = [
+        "# Camera list with one line of data per camera:",
+        "#   CAMERA_ID, MODEL, WIDTH, HEIGHT, PARAMS[]",
+        "# Number of cameras: 1",
+        "1 SIMPLE_RADIAL 624 574 1000.0 312 287 1.0",
+    ]
+
+    with open(fullpath, "w") as fout:
+        for line in to_write_lines: fout.write(line + "\n")
 
 
+def write_images(path, db, N=100):
+    fullpath = os.path.join(path, "images.txt")
+    cursor = db.cursor()
 
     to_write_lines = [
         "# Image list with two lines of data per image:",
@@ -27,34 +40,22 @@ if __name__ == '__main__':
         "# Number of images: ???, mean observations per image: ???"
     ]
 
-    new_lines = []
+    # Fetch database names
+    db_list = cursor.execute("SELECT image_id, name FROM images")
+    sorted_db_list = sorted(db_list, key=lambda elem: elem[0])
+    assert [elem[0] for elem in sorted_db_list] == [*range(1, len(sorted_db_list) + 1)]
 
-    with open(os.path.join(basepath, "images_old.txt"), "r") as fin:
-        for line in fin.readlines()[0::2]:
-            if line[0] != "#":
-                IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME = line.split()
-
-                new_lines.append([IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME])
-
-    # Sort the lines by id
-    sorted_lines = sorted(new_lines, key=lambda line: int(re.findall(r'\d+', line[-1])[0]))
-
-    # Fix coordinates
-    N = len(sorted_lines) + 1
-    for i in tqdm(range(N - 1)):
-        IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME = sorted_lines[i]
+    for i, IMAGE in sorted_db_list:
         theta = 2 * np.pi * i / N
 
-        NEW_TX = np.sin(theta)
-        NEW_TY = np.cos(theta)
-        NEW_TZ = 0.0
-        NEW_T = np.array([NEW_TX, NEW_TY, NEW_TZ])
+        TX = np.sin(theta)
+        TY = np.cos(theta)
+        TZ = 0.0
+        T = np.array([TX, TY, TZ])
 
         # Creating a quaternion that rotates around a given point
         # according to https://www.euclideanspace.com/maths/geometry/affine/aroundPoint/index.htm
         # Better finding: https://github.com/colmap/colmap/issues/434
-
-        norm_array = lambda l: np.array(l) / np.linalg.norm(np.array(l))
 
         if theta != 0.0:
 
@@ -81,16 +82,54 @@ if __name__ == '__main__':
 
         R = Rotation.from_matrix(quat.rotation_matrix)
 
-        new_transform_quat = Quaternion(matrix=R.as_matrix().T)
-        NEW_T = -R.as_matrix().T.dot(NEW_T)
-        NEW_TX, NEW_TY, NEW_TZ = NEW_T
+        transform_quat = Quaternion(matrix=R.as_matrix().T)
+        T = -R.as_matrix().T.dot(T)
+        TX, TY, TZ = T
 
-        NEW_QW, NEW_QX, NEW_QY, NEW_QZ = new_transform_quat  # QW, QX, QY, QZ
+        QW, QX, QY, QZ = transform_quat  # QW, QX, QY, QZ
 
         to_write_lines.append(" ".join(
-            [IMAGE_ID, str(NEW_QW), str(NEW_QX), str(NEW_QY), str(NEW_QZ), str(NEW_TX), str(NEW_TY), str(NEW_TZ),
-             CAMERA_ID, NAME]) + "\n")
-        # to_write_lines.append("\n")
+            [str(i), str(QW), str(QX), str(QY), str(QZ), str(TX), str(TY), str(TZ),
+             str(1), IMAGE]) + "\n")
 
-    with open(os.path.join(basepath, "images.txt", "w")) as fout:
+        cursor.execute(f"""UPDATE images
+                           SET prior_qw = {QW}, prior_qx = {QX}, prior_qy = {QY}, prior_qz = {QZ},
+                           prior_tx = {TX}, prior_ty = {TY}, prior_tz = {TZ}
+                           WHERE image_id == {i};""")
+
+        conn.commit()
+
+    with open(fullpath, "w") as fout:
         for line in to_write_lines: fout.write(line + "\n")
+
+
+def write_points3d(path):
+    fullpath = os.path.join(path, "points3D.txt")
+
+    to_write_lines = ["# 3D point list with one line of data per point:",
+                      "#   POINT3D_ID, X, Y, Z, R, G, B, ERROR, TRACK[] as (IMAGE_ID, POINT2D_IDX)",
+                      "# Number of points: ???, mean track length: ???"
+                      ]
+
+    with open(fullpath, "w") as fout:
+        for line in to_write_lines: fout.write(line + "\n")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Pose generator')
+    parser.add_argument('path', type=str, help='Path to generate cameras.txt, images.txt, points3D.txt')
+    parser.add_argument('--database_path', type=str, help='Path to the database, optionally '
+                                                          'inferred from the path if possible')
+    args = parser.parse_args()
+
+    os.makedirs(args.path, exist_ok=True)
+
+    if args.database_path is not None:
+        conn = sqlite3.connect(args.database_path)
+    else:
+        db_path = os.path.join(os.path.dirname(os.path.dirname(args.path)), "database.db")
+        conn = sqlite3.connect(db_path)
+
+    write_cameras(args.path)
+    write_images(args.path, conn, N=100)
+    write_points3d(args.path)
