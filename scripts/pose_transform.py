@@ -4,6 +4,7 @@ from tqdm.auto import tqdm
 from pyquaternion import Quaternion
 from scipy.spatial.transform import Rotation
 import re
+import argparse
 
 basepath = "data/venus-rough-1-positions-tests/colmap_text"
 
@@ -16,6 +17,8 @@ def rot3to4(rotation: np.ndarray):
 
 
 if __name__ == '__main__':
+    
+    
     to_write_lines = [
         "# Image list with two lines of data per image:",
         "#   IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME",
